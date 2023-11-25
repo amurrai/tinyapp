@@ -9,6 +9,16 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const errorHandler = (err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Something went wrong.";
+
+  return res.status(statusCode || 500).json({
+    error: statusCode,
+    message: err.message
+  })
+}
+
 function generateRandomString() {
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -18,6 +28,8 @@ function generateRandomString() {
   }
   return result;
 }
+
+app.use(errorHandler);
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -36,6 +48,7 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls.json", (req, res) => {
+  
   res.json(urlDatabase);
 });
 
@@ -58,6 +71,9 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
+  if (!urlDatabase[req.params.id]) {
+    res.sendStatus(404)
+  }
   const longURL = urlDatabase[req.params.id]
   res.redirect(longURL);
 });
