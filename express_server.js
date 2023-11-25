@@ -33,12 +33,6 @@ app.use(errorHandler);
 
 app.use(express.urlencoded({ extended: true }));
 
-app.post("/urls", (req, res) => {
-  let id = generateRandomString();
-  urlDatabase[id] = req.body.longURL;
-  res.redirect(`/urls/${id}`);
-});
-
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -70,15 +64,23 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL;
+  res.redirect("/urls");
+});
+
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
 app.get("/u/:id", (req, res) => {
-  if (!urlDatabase[req.params.id]) {
-    res.sendStatus(404)
-  }
   const longURL = urlDatabase[req.params.id]
   res.redirect(longURL);
+});
+
+app.post("/urls", (req, res) => {
+  let id = generateRandomString();
+  urlDatabase[id] = req.body.longURL;
+  res.redirect(`/urls/${id}`);
 });
