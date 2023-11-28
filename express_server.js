@@ -10,6 +10,8 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {};
+
 const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || "Something went wrong.";
@@ -53,7 +55,7 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    username: req.cookies["username"],
+    user: users[req.cookies["user_id"]],
     urls: urlDatabase 
   };
   res.render("urls_index", templateVars);
@@ -61,14 +63,14 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = { 
-    username: req.cookies["username"]
+    user: users[req.cookies["user_id"]]
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
   const templateVars = { 
-    username: req.cookies["username"],
+    user: users[req.cookies["user_id"]],
     id: req.params.id, 
     longURL: urlDatabase[req.params.id] 
   };
@@ -82,9 +84,7 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = { 
-    username: req.cookies["username"],
-    id: req.params.id, 
-    longURL: urlDatabase[req.params.id] 
+    user: users[req.cookies["user_id"]]
   };
   res.render("register", templateVars);
 });
@@ -111,6 +111,16 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
+  res.redirect("/urls");
+});
+
+app.post("/register", (req, res) => {
+  let id = generateRandomString();
+  users[id] = {'id': id}
+  users[id]['email'] = req.body.email;
+  users[id]['password'] = req.body.password;
+  res.cookie("user_id", id);
+  console.log(users);
   res.redirect("/urls");
 });
