@@ -21,6 +21,14 @@ const errorHandler = (err, req, res, next) => {
     message: err.message
   })
 }
+const userLookUp = (email) => {
+  for (const userID in users) {
+    if (users[userID]['email'] === email) {
+      return users[userID];
+    }
+  }
+  return null
+}
 
 function generateRandomString() {
   let result = '';
@@ -116,6 +124,12 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
+  if (!req.body.email || !req.body.password) {
+     return res.status(400).send('Please enter both email and password')
+  };
+  if (userLookUp(req.body.email)) {
+    return res.status(400).send('Email is already registered!')
+  };
   let id = generateRandomString();
   users[id] = {'id': id}
   users[id]['email'] = req.body.email;
