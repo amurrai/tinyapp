@@ -139,17 +139,18 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  if (!req.body.email || !req.body.password) {
+  const email = req.body.email;
+  const password = req.body.password;
+  
+  if (!email || !password) {
     return res.status(400).send('Please enter both email and password');
   }
-  if (userLookUp(req.body.email)) {
+  if (userLookUp(email)) {
     return res.status(400).send('Email is already registered!');
   }
   let id = generateRandomString();
-  users[id] = {'id': id};
-  users[id]['email'] = req.body.email;
-  users[id]['password'] = req.body.password;
+  const user = {id, email, password};
+  users[id] = user;
   res.cookie("user_id", id);
-  console.log(users);
   res.redirect("/urls");
 });
