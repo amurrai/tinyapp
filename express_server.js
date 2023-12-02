@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
+const { userLookUp } = require("./helpers")
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -31,14 +32,7 @@ const errorHandler = (err, req, res, next) => {
     message: err.message
   });
 };
-const userLookUp = (email) => {
-  for (const userID in users) {
-    if (users[userID]['email'] === email) {
-      return users[userID];
-    }
-  }
-  return null;
-};
+
 const generateRandomString = () => {
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -189,7 +183,7 @@ app.post("/login", (req, res) => {
   if (!req.body.email || !req.body.password) {
     return res.status(400).send('Please enter both email and password');
   }
-  let userProfile = userLookUp(req.body.email);
+  let userProfile = userLookUp(req.body.email, users);
   if (!userProfile) {
     return res.status(403).send('Email is not registered!');
   }
@@ -208,12 +202,11 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  
-  
+    
   if (!email || !password) {
     return res.status(400).send('Please enter both email and password');
   }
-  if (userLookUp(email)) {
+  if (userLookUp(email, users)) {
     return res.status(400).send('Email is already registered!');
   }
   const id = generateRandomString();
