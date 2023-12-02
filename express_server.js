@@ -6,8 +6,18 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    user_id: "9GmQvA",
+  },
+  asm5xK: {
+    longURL: "http://www.google.com",
+    user_id: "9GmQvA",
+  },
+  aer345: {
+    longURL: "http://www.google.com",
+    user_id: "iA8rAO",
+  }
 };
 
 const users = {};
@@ -38,6 +48,16 @@ const generateRandomString = () => {
   return result;
 };
 
+const urlsForUser = (id) => {
+  let result = {};
+  for (const url in urlDatabase) {
+    if (urlDatabase[url].user_id === id) {
+      result[url] = { longURL: urlDatabase[url].longURL };
+    } 
+  }
+  return result
+}
+
 app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -50,20 +70,16 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-app.get("/urls.json", (req, res) => {
-  
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 app.get("/urls", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(401).send('Please login in order to use the app');
+  };
+  const urls = urlsForUser(req.cookies["user_id"]);
   const templateVars = {
     user: users[req.cookies["user_id"]],
-    urls: urlDatabase
+    urls
   };
+ 
   res.render("urls_index", templateVars);
 });
 
@@ -78,11 +94,22 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(401).send('Please login in order to use the app');
+  };
+  if (urlDatabase[req.params.id].user_id !== req.cookies.user_id) {
+    return res.status(403).send('Access Denied');
+  };
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send('URL code not found');
+  };
+
   const templateVars = {
     user: users[req.cookies["user_id"]],
     id: req.params.id,
-    longURL: urlDatabase[req.params.id]
+    longURL: urlDatabase[req.params.id].longURL
   };
+  
   res.render("urls_show", templateVars);
 });
 
@@ -90,7 +117,7 @@ app.get("/u/:id", (req, res) => {
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
   };
-  const longURL = urlDatabase[req.params.id];
+  const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
 
@@ -114,13 +141,13 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
-app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect("/urls");
 });
 
@@ -129,7 +156,10 @@ app.post("/urls", (req, res) => {
     return res.status(401).send('Please login in order to use the app');
   };
   let id = generateRandomString();
-  urlDatabase[id] = req.body.longURL;
+  urlDatabase[id] = {
+    longURL: req.body.longURL,
+    user_id: req.cookies.user_id
+  };
   res.redirect(`/urls/${id}`);
 });
 
