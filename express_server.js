@@ -1,5 +1,5 @@
 const express = require("express");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -61,7 +61,10 @@ const urlsForUser = (id) => {
 
 app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['LHL'],
+}))
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -72,12 +75,12 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
   };
-  const urls = urlsForUser(req.cookies["user_id"]);
+  const urls = urlsForUser(req.session["user_id"]);
   const templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session["user_id"]],
     urls
   };
  
@@ -86,19 +89,19 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["user_id"]]
+    user: users[req.session["user_id"]]
   };
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.redirect("/login");
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
   };
-  if (urlDatabase[req.params.id].user_id !== req.cookies.user_id) {
+  if (urlDatabase[req.params.id].user_id !== req.session.user_id) {
     return res.status(403).send('Access Denied');
   };
   if (!urlDatabase[req.params.id]) {
@@ -106,7 +109,7 @@ app.get("/urls/:id", (req, res) => {
   };
 
   const templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session["user_id"]],
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL
   };
@@ -124,9 +127,9 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["user_id"]]
+    user: users[req.session["user_id"]]
   };
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     return res.redirect("/urls");
   };
   res.render("register", templateVars);
@@ -134,19 +137,19 @@ app.get("/register", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["user_id"]]
+    user: users[req.session["user_id"]]
   };
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     return res.redirect("/urls");
   };
   res.render("login", templateVars);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
   };
-  if (urlDatabase[req.params.id].user_id !== req.cookies.user_id) {
+  if (urlDatabase[req.params.id].user_id !== req.session.user_id) {
     return res.status(403).send('Access Denied');
   };
   if (!urlDatabase[req.params.id]) {
@@ -157,10 +160,10 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
   };
-  if (urlDatabase[req.params.id].user_id !== req.cookies.user_id) {
+  if (urlDatabase[req.params.id].user_id !== req.session.user_id) {
     return res.status(403).send('Access Denied');
   };
   if (!urlDatabase[req.params.id]) {
@@ -171,13 +174,13 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
   };
   let id = generateRandomString();
   urlDatabase[id] = {
     longURL: req.body.longURL,
-    user_id: req.cookies.user_id
+    user_id: req.session.user_id
   };
   res.redirect(`/urls/${id}`);
 });
@@ -193,12 +196,12 @@ app.post("/login", (req, res) => {
   if (!bcrypt.compareSync(req.body.password, userProfile.hashedPassword)) {
     return res.status(403).send('Password is incorrect!');
   }
-  res.cookie("user_id", userProfile.id);
+  req.session.user_id = userProfile.id;
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -217,6 +220,6 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
   const user = {id, email, hashedPassword};
   users[id] = user;
-  res.cookie("user_id", id);
+  req.session.user_id = id;
   res.redirect("/urls");
 });
