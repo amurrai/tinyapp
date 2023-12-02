@@ -184,7 +184,7 @@ app.post("/login", (req, res) => {
   if (!req.body.email || !req.body.password) {
     return res.status(400).send('Please enter both email and password');
   }
-  let userProfile = userLookUp(req.body.email, users);
+  let userProfile = users[userLookUp(req.body.email, users)];
   if (!userProfile) {
     return res.status(403).send('Email is not registered!');
   }
