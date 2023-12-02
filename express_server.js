@@ -142,11 +142,29 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(401).send('Please login in order to use the app');
+  };
+  if (urlDatabase[req.params.id].user_id !== req.cookies.user_id) {
+    return res.status(403).send('Access Denied');
+  };
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send('URL code not found');
+  };
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
 app.post("/urls/:id", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(401).send('Please login in order to use the app');
+  };
+  if (urlDatabase[req.params.id].user_id !== req.cookies.user_id) {
+    return res.status(403).send('Access Denied');
+  };
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send('URL code not found');
+  };
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect("/urls");
 });
