@@ -2,27 +2,13 @@ const express = require("express");
 const methodOverride = require('method-override');
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-const { userLookUp } = require("./helpers");
+const { userLookUp, generateRandomString } = require("./helpers");
 const app = express();
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
 
-const urlDatabase = {
-  b2xVn2: {
-    longURL: "http://www.lighthouselabs.ca",
-    userId: "9GmQvA",
-  },
-  asm5xK: {
-    longURL: "http://www.google.com",
-    userId: "9GmQvA",
-  },
-  aer345: {
-    longURL: "http://www.google.com",
-    userId: "iA8rAO",
-  }
-};
-
+const urlDatabase = {};
 const users = {};
 
 const errorHandler = (err, req, res, next) => {
@@ -32,16 +18,6 @@ const errorHandler = (err, req, res, next) => {
     error: statusCode,
     message: err.message
   });
-};
-
-const generateRandomString = () => {
-  let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const charactersLength = characters.length;
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
 };
 
 const urlsForUser = (id) => {
@@ -67,6 +43,9 @@ app.listen(PORT, () => {
 });
 
 app.get("/", (req, res) => {
+  if (!(req.session.userId in users)) {
+    return res.redirect("/login");
+  }
   res.redirect("/urls");
 });
 
