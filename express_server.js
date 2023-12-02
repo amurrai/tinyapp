@@ -69,7 +69,8 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls", (req, res) => {
-  if (!req.session.user_id) {
+  if (!(req.session.user_id in users)) {
+    req.session = null;
     return res.status(401).send('Please login in order to use the app');
   };
   const urls = urlsForUser(req.session["user_id"]);
