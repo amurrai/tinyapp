@@ -1,4 +1,5 @@
 const express = require("express");
+const methodOverride = require('method-override');
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const { userLookUp } = require("./helpers")
@@ -55,6 +56,7 @@ const urlsForUser = (id) => {
 
 app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
 app.use(cookieSession({
   name: 'session',
   keys: ['LHL'],
@@ -140,7 +142,7 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-app.post("/urls/:id/delete", (req, res) => {
+app.delete("/urls/:id/delete", (req, res) => {
   if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
   }
@@ -154,7 +156,7 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/urls/:id", (req, res) => {
+app.put("/urls/:id", (req, res) => {
   if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
   }

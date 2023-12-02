@@ -27,7 +27,7 @@
       <div class="card-body">
         <h5 class="card-title text-center">Edit</h5>
         <p class="card-text">
-          <form class="form-inline" action="/urls/<%= id %>" method="POST">
+          <form class="form-inline" action="/urls/<%= id %>?_method=PUT" method="POST">
             <div class="form-group mb-2">
               <label for="longURL">New URL:</label>
               <input
