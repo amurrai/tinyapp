@@ -2,7 +2,7 @@ const express = require("express");
 const methodOverride = require('method-override');
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-const { userLookUp } = require("./helpers")
+const { userLookUp } = require("./helpers");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -11,15 +11,15 @@ app.set("view engine", "ejs");
 const urlDatabase = {
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
-    user_id: "9GmQvA",
+    userId: "9GmQvA",
   },
   asm5xK: {
     longURL: "http://www.google.com",
-    user_id: "9GmQvA",
+    userId: "9GmQvA",
   },
   aer345: {
     longURL: "http://www.google.com",
-    user_id: "iA8rAO",
+    userId: "iA8rAO",
   }
 };
 
@@ -47,12 +47,12 @@ const generateRandomString = () => {
 const urlsForUser = (id) => {
   let result = {};
   for (const url in urlDatabase) {
-    if (urlDatabase[url].user_id === id) {
+    if (urlDatabase[url].userId === id) {
       result[url] = { longURL: urlDatabase[url].longURL };
-    } 
+    }
   }
-  return result
-}
+  return result;
+};
 
 app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
@@ -60,24 +60,24 @@ app.use(methodOverride('_method'));
 app.use(cookieSession({
   name: 'session',
   keys: ['LHL'],
-}))
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
+}));
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+app.get("/", (req, res) => {
+  res.redirect("/urls");
+});
+
 app.get("/urls", (req, res) => {
-  if (!(req.session.user_id in users)) {
+  if (!(req.session.userId in users)) {
     req.session = null;
     return res.status(401).send('Please login in order to use the app');
   }
-  const urls = urlsForUser(req.session["user_id"]);
+  const urls = urlsForUser(req.session["userId"]);
   const templateVars = {
-    user: users[req.session["user_id"]],
+    user: users[req.session["userId"]],
     urls
   };
  
@@ -85,30 +85,37 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    user: users[req.session["user_id"]]
-  };
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.redirect("/login");
   }
+  const templateVars = {
+    user: users[req.session["userId"]]
+  };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.status(401).send('Please login in order to use the app');
   }
-  if (urlDatabase[req.params.id].user_id !== req.session.user_id) {
+  if (urlDatabase[req.params.id].userId !== req.session.userId) {
     return res.status(403).send('Access Denied');
   }
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
   }
+  let visitCount = 0;
+
+  for (let key in urlDatabase[req.params.id].visitLog) {
+    visitCount += urlDatabase[req.params.id].visitLog[key].length;
+  }
 
   const templateVars = {
-    user: users[req.session["user_id"]],
+    user: users[req.session["userId"]],
     id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL
+    longURL: urlDatabase[req.params.id].longURL,
+    visitLog: urlDatabase[req.params.id].visitLog,
+    visitCount
   };
   
   res.render("urls_show", templateVars);
@@ -118,15 +125,21 @@ app.get("/u/:id", (req, res) => {
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
   }
+  if (req.session.visitorId) {
+    urlDatabase[req.params.id].visitLog[req.session.visitorId].push(new Date());
+  } else {
+    req.session.visitorId = generateRandomString();
+    urlDatabase[req.params.id].visitLog[req.session.visitorId] = [new Date()];
+  }
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.session["user_id"]]
+    user: users[req.session["userId"]]
   };
-  if (req.session.user_id) {
+  if (req.session.userId) {
     return res.redirect("/urls");
   }
   res.render("register", templateVars);
@@ -134,19 +147,19 @@ app.get("/register", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: users[req.session["user_id"]]
+    user: users[req.session["userId"]]
   };
-  if (req.session.user_id) {
+  if (req.session.userId) {
     return res.redirect("/urls");
   }
   res.render("login", templateVars);
 });
 
 app.delete("/urls/:id/delete", (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.status(401).send('Please login in order to use the app');
   }
-  if (urlDatabase[req.params.id].user_id !== req.session.user_id) {
+  if (urlDatabase[req.params.id].userId !== req.session.userId) {
     return res.status(403).send('Access Denied');
   }
   if (!urlDatabase[req.params.id]) {
@@ -157,10 +170,10 @@ app.delete("/urls/:id/delete", (req, res) => {
 });
 
 app.put("/urls/:id", (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.status(401).send('Please login in order to use the app');
   }
-  if (urlDatabase[req.params.id].user_id !== req.session.user_id) {
+  if (urlDatabase[req.params.id].userId !== req.session.userId) {
     return res.status(403).send('Access Denied');
   }
   if (!urlDatabase[req.params.id]) {
@@ -171,13 +184,14 @@ app.put("/urls/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.status(401).send('Please login in order to use the app');
   }
   let id = generateRandomString();
   urlDatabase[id] = {
     longURL: req.body.longURL,
-    user_id: req.session.user_id
+    userId: req.session.userId,
+    visitLog: {}
   };
   res.redirect(`/urls/${id}`);
 });
@@ -193,7 +207,7 @@ app.post("/login", (req, res) => {
   if (!bcrypt.compareSync(req.body.password, userProfile.hashedPassword)) {
     return res.status(403).send('Password is incorrect!');
   }
-  req.session.user_id = userProfile.id;
+  req.session.userId = userProfile.id;
   res.redirect("/urls");
 });
 
@@ -216,6 +230,6 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
   const user = {id, email, hashedPassword};
   users[id] = user;
-  req.session.user_id = id;
+  req.session.userId = id;
   res.redirect("/urls");
 });

@@ -20,6 +20,10 @@
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
+        <p class="card-text">
+          Total Visits: <%= visitCount %> 
+          Unique Visitors: <%= Object.keys(visitLog).length %>
+        </p>
       </div>
       <div class="card-footer text-muted"></div>
     </div>
@@ -43,6 +47,26 @@
         </p>
       </div>
     </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Visitor ID</th>
+          <th scope="col">Times visited</th>
+          <th scope="col">Visit log</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (let id in visitLog) { %>
+          <tr>
+            <td><%= id %></td>
+            <td><%= visitLog[id].length %></td>
+            <td><% for (let i of visitLog[id]) { %>
+                  <%= i %><br>
+            <% } %></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
     <!-- Bootstrap JS -->
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
