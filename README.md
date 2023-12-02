@@ -5,11 +5,13 @@ TinyApp is a full stack web application built with Node and Express that allows 
 ## Final Product
 
 
-!["Register new user page"](https://raw.githubusercontent.com/amurrai/tinyapp/621db867f434b4225d2b126a651edb53262181fc/docs/register-page.png)
+!["Register new user page"](https://github.com/amurrai/tinyapp/blob/master/docs/register-page.png)
 
-!["Add new URL page"](https://raw.githubusercontent.com/amurrai/tinyapp/621db867f434b4225d2b126a651edb53262181fc/docs/new-url-page.png)
+!["Add new URL page"](https://github.com/amurrai/tinyapp/blob/master/docs/new-url-page.png)
 
-!["User's URLs page"](https://raw.githubusercontent.com/amurrai/tinyapp/621db867f434b4225d2b126a651edb53262181fc/docs/urls-page.png)
+!["User's URLs page"](https://github.com/amurrai/tinyapp/blob/master/docs/urls-page.png)
+
+!["URL view page"](https://github.com/amurrai/tinyapp/blob/master/docs/urls-page.png)
 
 ## Dependencies
 
