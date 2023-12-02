@@ -72,7 +72,7 @@ app.get("/urls", (req, res) => {
   if (!(req.session.user_id in users)) {
     req.session = null;
     return res.status(401).send('Please login in order to use the app');
-  };
+  }
   const urls = urlsForUser(req.session["user_id"]);
   const templateVars = {
     user: users[req.session["user_id"]],
@@ -88,20 +88,20 @@ app.get("/urls/new", (req, res) => {
   };
   if (!req.session.user_id) {
     return res.redirect("/login");
-  };
+  }
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
   if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
-  };
+  }
   if (urlDatabase[req.params.id].user_id !== req.session.user_id) {
     return res.status(403).send('Access Denied');
-  };
+  }
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
-  };
+  }
 
   const templateVars = {
     user: users[req.session["user_id"]],
@@ -115,7 +115,7 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
-  };
+  }
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
@@ -126,7 +126,7 @@ app.get("/register", (req, res) => {
   };
   if (req.session.user_id) {
     return res.redirect("/urls");
-  };
+  }
   res.render("register", templateVars);
 });
 
@@ -136,20 +136,20 @@ app.get("/login", (req, res) => {
   };
   if (req.session.user_id) {
     return res.redirect("/urls");
-  };
+  }
   res.render("login", templateVars);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
   if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
-  };
+  }
   if (urlDatabase[req.params.id].user_id !== req.session.user_id) {
     return res.status(403).send('Access Denied');
-  };
+  }
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
-  };
+  }
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
@@ -157,13 +157,13 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
-  };
+  }
   if (urlDatabase[req.params.id].user_id !== req.session.user_id) {
     return res.status(403).send('Access Denied');
-  };
+  }
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
-  };
+  }
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect("/urls");
 });
@@ -171,7 +171,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
     return res.status(401).send('Please login in order to use the app');
-  };
+  }
   let id = generateRandomString();
   urlDatabase[id] = {
     longURL: req.body.longURL,
