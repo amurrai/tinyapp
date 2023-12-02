@@ -11,7 +11,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 !["User's URLs page"](https://github.com/amurrai/tinyapp/blob/master/docs/urls-page.png)
 
-!["URL view page"](https://github.com/amurrai/tinyapp/blob/master/docs/urls-page.png)
+!["URL view page"](https://github.com/amurrai/tinyapp/blob/master/docs/url-view-page.png)
 
 ## Dependencies
 
