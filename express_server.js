@@ -11,6 +11,7 @@ app.set("view engine", "ejs");
 const urlDatabase = {};
 const users = {};
 
+// general express error handler
 const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || 500;
 
@@ -20,7 +21,7 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-
+// Middleware
 app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
@@ -33,7 +34,9 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+// Routes
 app.get("/", (req, res) => {
+  // if not logged or logged userID doesn't match Database, redirect to /login
   if (!(req.session.userId in users)) {
     return res.redirect("/login");
   }
@@ -41,11 +44,13 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  // if not logged or logged userID doesn't match Database, clear cookies and request login
   if (!(req.session.userId in users)) {
     req.session = null;
     return res.status(401).send('Please login in order to use the app');
   }
-  const urls = urlsForUser(req.session["userId"]);
+  // logged user info and owned URLs passed to ejs template
+  const urls = urlsForUser(req.session["userId"], urlDatabase);
   const templateVars = {
     user: users[req.session["userId"]],
     urls
@@ -54,7 +59,8 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.session.userId) {
+  // if not logged or logged userID doesn't match Database, redirect to /login
+  if (!(req.session.userId in users)) {
     return res.redirect("/login");
   }
   const templateVars = {
@@ -63,17 +69,21 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+// URL view and edit page
 app.get("/urls/:id", (req, res) => {
-  if (!req.session.userId) {
+  // if not logged or logged userID doesn't match Database, request to login
+  if (!(req.session.userId in users)) {
     return res.status(401).send('Please login in order to use the app');
   }
+  // if id is invalid
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
   }
+  // if id does not belong to logged user
   if (urlDatabase[req.params.id].userId !== req.session.userId) {
     return res.status(403).send('Access Denied');
   }
-
+  // visit log and count info passed to ejs template
   let visitCount = 0;
   for (let key in urlDatabase[req.params.id].visitLog) {
     visitCount += urlDatabase[req.params.id].visitLog[key].length;
@@ -90,10 +100,12 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// shortened URL redirect
 app.get("/u/:id", (req, res) => {
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
   }
+  // cookie set to track visits and visitors
   if (req.session.visitorId) {
     urlDatabase[req.params.id].visitLog[req.session.visitorId].push(new Date());
   } else {
@@ -108,6 +120,7 @@ app.get("/register", (req, res) => {
   const templateVars = {
     user: users[req.session["userId"]]
   };
+  // if already logged
   if (req.session.userId) {
     return res.redirect("/urls");
   }
@@ -118,6 +131,7 @@ app.get("/login", (req, res) => {
   const templateVars = {
     user: users[req.session["userId"]]
   };
+  // if already logged
   if (req.session.userId) {
     return res.redirect("/urls");
   }
@@ -125,35 +139,42 @@ app.get("/login", (req, res) => {
 });
 
 app.delete("/urls/:id/delete", (req, res) => {
-  if (!req.session.userId) {
+  // if not logged or logged userID doesn't match Database, request to login
+  if (!(req.session.userId in users)) {
     return res.status(401).send('Please login in order to use the app');
   }
-  if (urlDatabase[req.params.id].userId !== req.session.userId) {
-    return res.status(403).send('Access Denied');
-  }
+  // if id is invalid
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
+  }
+  // if id does not belong to logged user
+  if (urlDatabase[req.params.id].userId !== req.session.userId) {
+    return res.status(403).send('Access Denied');
   }
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
 app.put("/urls/:id", (req, res) => {
-  if (!req.session.userId) {
+  // if not logged or logged userID doesn't match Database, request to login
+  if (!(req.session.userId in users)) {
     return res.status(401).send('Please login in order to use the app');
   }
-  if (urlDatabase[req.params.id].userId !== req.session.userId) {
-    return res.status(403).send('Access Denied');
-  }
+  // if id is invalid
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
+  }
+  // if id does not belong to logged user
+  if (urlDatabase[req.params.id].userId !== req.session.userId) {
+    return res.status(403).send('Access Denied');
   }
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect("/urls");
 });
 
 app.post("/urls", (req, res) => {
-  if (!req.session.userId) {
+  // if not logged or logged userID doesn't match Database, request to login
+  if (!(req.session.userId in users)) {
     return res.status(401).send('Please login in order to use the app');
   }
   let id = generateRandomString();
@@ -180,6 +201,7 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+// clear cookies for logging out
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
@@ -195,6 +217,7 @@ app.post("/register", (req, res) => {
   if (userLookUp(email, users)) {
     return res.status(400).send('Email is already registered!');
   }
+  // new user data registration
   const id = generateRandomString();
   const hashedPassword = bcrypt.hashSync(password, 10);
   const user = {id, email, hashedPassword};

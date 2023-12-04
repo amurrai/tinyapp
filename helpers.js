@@ -20,14 +20,14 @@ const generateRandomString = () => {
 };
 
 // Returns URLs owned by the provided User ID
-const urlsForUser = (id) => {
+const urlsForUser = (id, database) => {
   let result = {};
-  for (const url in urlDatabase) {
-    if (urlDatabase[url].userId === id) {
-      result[url] = { longURL: urlDatabase[url].longURL };
+  for (const url in database) {
+    if (database[url].userId === id) {
+      result[url] = { longURL: database[url].longURL };
     }
   }
   return result;
 };
 
-module.exports = { userLookUp, generateRandomStrin, urlsForUser }
+module.exports = { userLookUp, generateRandomString, urlsForUser }
