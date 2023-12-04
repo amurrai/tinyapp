@@ -2,7 +2,7 @@ const express = require("express");
 const methodOverride = require('method-override');
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-const { userLookUp, generateRandomString } = require("./helpers");
+const { userLookUp, generateRandomString, urlsForUser } = require("./helpers");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -20,15 +20,6 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-const urlsForUser = (id) => {
-  let result = {};
-  for (const url in urlDatabase) {
-    if (urlDatabase[url].userId === id) {
-      result[url] = { longURL: urlDatabase[url].longURL };
-    }
-  }
-  return result;
-};
 
 app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
