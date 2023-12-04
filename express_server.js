@@ -58,8 +58,7 @@ app.get("/urls", (req, res) => {
   const templateVars = {
     user: users[req.session["userId"]],
     urls
-  };
- 
+  }; 
   res.render("urls_index", templateVars);
 });
 
@@ -77,14 +76,14 @@ app.get("/urls/:id", (req, res) => {
   if (!req.session.userId) {
     return res.status(401).send('Please login in order to use the app');
   }
-  if (urlDatabase[req.params.id].userId !== req.session.userId) {
-    return res.status(403).send('Access Denied');
-  }
   if (!urlDatabase[req.params.id]) {
     return res.status(404).send('URL code not found');
   }
-  let visitCount = 0;
+  if (urlDatabase[req.params.id].userId !== req.session.userId) {
+    return res.status(403).send('Access Denied');
+  }
 
+  let visitCount = 0;
   for (let key in urlDatabase[req.params.id].visitLog) {
     visitCount += urlDatabase[req.params.id].visitLog[key].length;
   }
